@@ -36,6 +36,17 @@ class VisualGridHuntGame:
                 self.opponents.append(op_pos)
 
         self.score = 0
+        self.toxic_traps = set()
+        while len(self.toxic_traps) < 4:
+            tx = random.randint(0, self.width - 1)
+            ty = random.randint(0, self.height - 1)
+            trap_pos = (tx, ty)
+
+            if (trap_pos !=(0,0)
+                    and trap_pos not in self.walls
+                    and trap_pos not in self.food_positions):
+                self.toxic_traps.add(trap_pos)
+
         self.steps = 0
         self.collision = False
 
