@@ -51,15 +51,21 @@ class VisualGridHuntGame:
         self.collision = False
 
     def get_percept(self) -> dict:
+        ax, ay = self.agent_pos
+        
+        # Check immediate adjacent cells for boundaries or walls
+        wall_up = (ax, ay + 1) in self.walls or ay + 1 >= self.height
+        wall_down = (ax, ay - 1) in self.walls or ay - 1 < 0
+        wall_left = (ax - 1, ay) in self.walls or ax - 1 < 0
+        wall_right = (ax + 1, ay) in self.walls or ax + 1 >= self.width
+
+        # The agent now only knows local information, not global coordinates
         return {
-            'agent_pos': list(self.agent_pos),
-            'opponent_positions': [list(op) for op in self.opponents],
-            'smells_food': tuple(self.agent_pos) in self.food_positions,
-            'smells_toxin': tuple(self.agent_pos) in self.toxic_traps,
-            'hit_wall': tuple(self.agent_pos) in self.walls,
-            'collision': self.collision,
-            'score': self.score,
-            'remaining_food': len(self.food_positions)
+            'food_here': tuple(self.agent_pos) in self.food_positions,
+            'wall_up': wall_up,
+            'wall_down': wall_down,
+            'wall_left': wall_left,
+            'wall_right': wall_right
         }
 
     def execute_action(self, action: str):
@@ -161,19 +167,35 @@ class GridGameGUI:
             self.canvas.create_oval(x1, y1, x1 + self.cell_size * 0.5, y1 + self.cell_size * 0.5, fill="#f59e0b",
                                     outline="#d97706")
 
+        
         for tx, ty in self.env.toxic_traps:
-            offset = self.cell_size * 0.25
-            x1 = tx * self.cell_size + offset
-            y1 = (self.env.height - 1 - ty) * self.cell_size + offset
+            cell_x = tx * self.cell_size
+            cell_y = (self.env.height - 1 - ty) * self.cell_size
+            
+        
+            pad = self.cell_size * 0.2
+            
+           
+            p1_x = cell_x + (self.cell_size / 2)
+            p1_y = cell_y + pad
+            
+            
+            p2_x = cell_x + pad
+            p2_y = cell_y + self.cell_size - pad
+            
+            
+            p3_x = cell_x + self.cell_size - pad
+            p3_y = cell_y + self.cell_size - pad
 
-            self.canvas.create_oval(
-                x1,
-                y1,
-                x1 + self.cell_size * 0.5,
-                y1 + self.cell_size * 0.5,
+            
+            self.canvas.create_polygon(
+                p1_x, p1_y,   
+                p2_x, p2_y,   
+                p3_x, p3_y,   
                 fill="purple",
-                outline="darkviolet"
-    )
+                outline="darkviolet",
+                width=2
+            )
         for ox, oy in self.env.opponents:
             offset = self.cell_size * 0.2
             x1 = ox * self.cell_size + offset
@@ -209,6 +231,89 @@ class GridGameGUI:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    # Try a larger grid size like 12x12 with 15 food and 3 opponents!
+   
     app = GridGameGUI(root, width=12, height=12, num_food=15, num_opponents=0)
     root.mainloop()
+
+class ModelBasedAgent:
+   
+    
+    def __init__(self):
+       
+        self.visited_cells = set()
+        
+        self.relative_pos = (0, 0) 
+        self.last_action = None
+     
+        self.visited_cells.add(self.relative_pos)
+        
+    def sense_and_act(self, percept) -> str:
+        
+        x, y = self.relative_pos
+        if self.last_action == 'Up':
+            y += 1
+        elif self.last_action == 'Down':
+            y -= 1
+        elif self.last_action == 'Left':
+            x -= 1
+        elif self.last_action == 'Right':
+            x += 1
+            
+       
+        self.relative_pos = (x, y)
+        self.visited_cells.add(self.relative_pos)
+        
+        
+        def is_visited(action):
+            nx, ny = self.relative_pos
+            if action == 'Up': ny += 1
+            elif action == 'Down': ny -= 1
+            elif action == 'Left': nx -= 1
+            elif action == 'Right': nx += 1
+            return (nx, ny) in self.visited_cells
+
+        
+        action_to_take = 'Stay'
+        
+        if percept['food_here']:
+            action_to_take = 'Stay'
+        else:
+           
+            if not percept['wall_up'] and not is_visited('Up'):
+                action_to_take = 'Up'
+            elif not percept['wall_right'] and not is_visited('Right'):
+                action_to_take = 'Right'
+            elif not percept['wall_down'] and not is_visited('Down'):
+                action_to_take = 'Down'
+            elif not percept['wall_left'] and not is_visited('Left'):
+                action_to_take = 'Left'
+            else:
+                
+                if not percept['wall_up']: action_to_take = 'Up'
+                elif not percept['wall_right']: action_to_take = 'Right'
+                elif not percept['wall_down']: action_to_take = 'Down'
+                elif not percept['wall_left']: action_to_take = 'Left'
+                
+        
+        self.last_action = action_to_take
+        return action_to_take    
+
+
+class SimpleReflexAgent:
+
+    
+    def sense_and_act(self, percept) -> str:
+        
+        if percept['food_here']:
+            return 'Stay' 
+        
+        if not percept['wall_up']:
+            return 'Up'
+        elif not percept['wall_right']:
+            return 'Right'
+        elif not percept['wall_down']:
+            return 'Down'
+        elif not percept['wall_left']:
+            return 'Left'
+        else:
+            return 'Stay' 
