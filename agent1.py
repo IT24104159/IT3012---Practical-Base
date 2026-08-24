@@ -1,24 +1,3 @@
-# agent.py
-import math
-import heapq
-
-
-class GreedyGridAgent:
-    """A simple agent that tries to move around systematically to clear the grid."""
-
-    def __init__(self):
-        self.actions_pool = ['Up', 'Down', 'Left', 'Right']
-
-    def manhattan_distance(self, pos, goal):
-        return abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])    
-
-    def sense_and_act(self, percept: dict) -> str:
-        # If standing directly on food, or just wander / move towards coordinates
-        pos = percept['agent_pos']
-        # Simple heuristic or fallback random sweep
-        
-        return random.choice(self.actions_pool)
-    
 class SearchAgent:
     def __init__(self):
         self.path = []
@@ -112,10 +91,3 @@ class SearchAgent:
             return self.path.pop(0)
 
         return None
-
-###testing the manhattan_distance  and    euclidean_distance  both functions  '''
-""""
-agent = SearchAgent()
-print(agent.manhattan_distance((0, 0), (3, 4)))
-print(agent.euclidean_distance((0, 0), (3, 4)))    
-"""

@@ -2,7 +2,7 @@
 # visual_grid_game.py
 import random
 import tkinter as tk
-
+from agent import SearchAgent
 
 class VisualGridHuntGame:
     """A flexible Pacman-style grid environment with support for configurable opponents and larger scales."""
@@ -120,6 +120,8 @@ class GridGameGUI:
     def __init__(self, root, width=10, height=10, num_food=12, num_opponents=2, walls=None):
         self.root = root
         self.root.title("IT3012 - Scalable Multi-Agent Grid Hunt")
+
+        self.agent = agent if agent is not None else SearchAgent()
 
         self.env = VisualGridHuntGame(width=width, height=height, num_food=num_food, num_opponents=num_opponents,
                                       custom_walls=walls)
@@ -318,3 +320,15 @@ class SimpleReflexAgent:
             return 'Left'
         else:
             return 'Stay' 
+
+
+if __name__ == "__main__":
+    import tkinter as tk
+    from agent import SearchAgent  # Import your agent
+
+    root = tk.Tk()
+    
+    # Pass your agent into GridGameGUI
+    app = GridGameGUI(root=root, width=10, height=10, agent=SearchAgent())
+    
+    root.mainloop()
